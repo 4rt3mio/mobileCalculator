@@ -3,10 +3,11 @@ package com.example.calculator
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import com.example.calculator.domain.model.CalculatorState
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.calculator.domain.usecase.CalculatorUseCase
-import com.example.calculator.presentation.CalculatorScreen
+import com.example.calculator.ui.CalculatorScreen
+import com.example.calculator.ui.viewmodel.CalculatorViewModel
+import com.example.calculator.ui.viewmodel.CalculatorViewModelFactory
 import com.example.calculator.ui.theme.CalculatorTheme
 
 class MainActivity : ComponentActivity() {
@@ -14,14 +15,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CalculatorTheme {
-                val useCase = remember { CalculatorUseCase() }
-                var state by remember { mutableStateOf(CalculatorState()) }
-
+                val viewModel: CalculatorViewModel = viewModel(
+                    factory = CalculatorViewModelFactory(CalculatorUseCase())
+                )
                 CalculatorScreen(
-                    state = state,
-                    onAction = { action ->
-                        state = useCase.processAction(state, action)
-                    }
+                    state = viewModel.state,
+                    onAction = viewModel::onAction
                 )
             }
         }

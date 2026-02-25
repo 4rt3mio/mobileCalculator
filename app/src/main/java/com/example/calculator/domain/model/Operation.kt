@@ -9,7 +9,11 @@ enum class Operation(val symbol: String) {
     SIGN("±"),
     CLEAR("C"),
     EQUALS("="),
-    DOT(".");
+    DOT("."),
+    BACKSPACE("⌫"),
+    SQUARE("x²"),
+    SQRT("√"),
+    ONE_OVER("1/x");
 
     companion object {
         fun fromSymbol(symbol: String): Operation? {

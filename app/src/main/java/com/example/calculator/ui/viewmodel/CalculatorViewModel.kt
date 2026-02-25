@@ -17,4 +17,8 @@ class CalculatorViewModel(
     fun onAction(action: String) {
         state = useCase.processAction(state, action)
     }
+
+    fun onShake() {
+        onAction("C")
+    }
 }

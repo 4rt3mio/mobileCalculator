@@ -5,23 +5,27 @@ import android.hardware.SensorManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.calculator.ui.history.HistoryScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.calculator.data.model.AppTheme
-import com.example.calculator.domain.usecase.CalculatorUseCase
+import com.example.calculator.ui.auth.AuthViewModel
+import com.example.calculator.ui.auth.PinEntryScreen
+import com.example.calculator.ui.auth.PinSetupScreen
+import com.example.calculator.ui.settings.SettingsScreen
 import com.example.calculator.ui.CalculatorScreen
-import com.example.calculator.ui.history.HistoryScreen
+import com.example.calculator.ui.theme.CalculatorTheme
 import com.example.calculator.ui.viewmodel.CalculatorViewModel
 import com.example.calculator.ui.viewmodel.CalculatorViewModelFactory
-import com.example.calculator.ui.theme.CalculatorTheme
+import com.example.calculator.domain.usecase.CalculatorUseCase
 import com.example.calculator.utils.ShakeDetector
-import com.google.firebase.messaging.FirebaseMessaging
-import android.util.Log
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.calculator.data.model.AppTheme
+import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var sensorManager: SensorManager
     private var shakeDetector: ShakeDetector? = null
@@ -33,12 +37,18 @@ class MainActivity : ComponentActivity() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
 
         setContent {
-            val viewModel: CalculatorViewModel = viewModel(
+            val authViewModel: AuthViewModel = viewModel()
+            authViewModel.setActivity(this)
+
+            val calculatorViewModel: CalculatorViewModel = viewModel(
                 factory = CalculatorViewModelFactory(CalculatorUseCase())
             )
-            val theme by viewModel.currentTheme.collectAsStateWithLifecycle()
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val history by viewModel.history.collectAsStateWithLifecycle()
+
+            val isAuthenticated by authViewModel.isAuthenticated.collectAsStateWithLifecycle()
+            val isPinSet by authViewModel.isPinSet.collectAsStateWithLifecycle()
+            val theme by calculatorViewModel.currentTheme.collectAsStateWithLifecycle()
+            val state by calculatorViewModel.state.collectAsStateWithLifecycle()
+            val history by calculatorViewModel.history.collectAsStateWithLifecycle()
 
             val darkTheme = when (theme) {
                 AppTheme.DARK -> true
@@ -46,35 +56,55 @@ class MainActivity : ComponentActivity() {
                 AppTheme.SYSTEM -> isSystemInDarkTheme()
             }
 
+            var showSettings by remember { mutableStateOf(false) }
             var showHistory by remember { mutableStateOf(false) }
 
             shakeDetector = ShakeDetector {
-                viewModel.onShake()
+                calculatorViewModel.onShake()
             }
 
             CalculatorTheme(darkTheme = darkTheme) {
-                if (showHistory) {
-                    HistoryScreen(
-                        historyItems = history,
-                        onBack = { showHistory = false }
-                    )
-                } else {
-                    CalculatorScreen(
-                        state = state,
-                        onAction = viewModel::onAction,
-                        onOpenHistory = { showHistory = true },
-                        currentTheme = theme,
-                        onThemeSelected = viewModel::changeTheme
-                    )
+                when {
+                    showSettings -> {
+                        SettingsScreen(
+                            onResetPin = {
+                                authViewModel.resetPin()
+                                showSettings = false
+                            }
+                        )
+                    }
+                    !isPinSet -> {
+                        PinSetupScreen(
+                            viewModel = authViewModel,
+                            onPinSet = { /*  */ }
+                        )
+                    }
+                    !isAuthenticated -> {
+                        PinEntryScreen(
+                            viewModel = authViewModel,
+                            onUnlocked = { /*  */ }
+                        )
+                    }
+                    else -> {
+                        if (showHistory) {
+                            HistoryScreen(
+                                historyItems = history,
+                                onBack = { showHistory = false }
+                            )
+                        } else {
+                            CalculatorScreen(
+                                state = state,
+                                onAction = calculatorViewModel::onAction,
+                                onOpenHistory = { showHistory = true },
+                                currentTheme = theme,
+                                onThemeSelected = calculatorViewModel::changeTheme,
+                                onOpenSettings = { showSettings = true }
+                            )
+                        }
+                    }
                 }
             }
         }
-        FirebaseMessaging.getInstance().subscribeToTopic("calculator")
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Log.d("FCM", "Subscribed to topic")
-                }
-            }
     }
 
     override fun onResume() {

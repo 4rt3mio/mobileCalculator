@@ -48,11 +48,15 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.core:core-splashscreen:1.2.0")
 
-    // Firebase с явными версиями
+    implementation("androidx.biometric:biometric-ktx:1.2.0-alpha05")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.google.firebase:firebase-firestore-ktx:25.1.1")
     implementation("com.google.firebase:firebase-messaging-ktx:24.1.0")
 
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.compose.foundation:foundation:1.7.5")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

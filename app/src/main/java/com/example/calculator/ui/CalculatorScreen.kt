@@ -18,7 +18,8 @@ fun CalculatorScreen(
     onAction: (String) -> Unit,
     onOpenHistory: () -> Unit,
     currentTheme: AppTheme,
-    onThemeSelected: (AppTheme) -> Unit
+    onThemeSelected: (AppTheme) -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -29,6 +30,9 @@ fun CalculatorScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            IconButton(onClick = onOpenSettings) {
+                Text("⚙️")
+            }
             IconButton(onClick = onOpenHistory) {
                 Text("📋")
             }

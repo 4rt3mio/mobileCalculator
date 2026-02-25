@@ -9,9 +9,11 @@ import com.example.calculator.ui.CalculatorScreen
 import com.example.calculator.ui.viewmodel.CalculatorViewModel
 import com.example.calculator.ui.viewmodel.CalculatorViewModelFactory
 import com.example.calculator.ui.theme.CalculatorTheme
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             CalculatorTheme {

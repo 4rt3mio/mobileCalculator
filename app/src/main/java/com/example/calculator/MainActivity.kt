@@ -24,6 +24,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.calculator.data.model.AppTheme
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.saveable.rememberSaveable
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -56,8 +58,8 @@ class MainActivity : AppCompatActivity() {
                 AppTheme.SYSTEM -> isSystemInDarkTheme()
             }
 
-            var showSettings by remember { mutableStateOf(false) }
-            var showHistory by remember { mutableStateOf(false) }
+            var showSettings by rememberSaveable { mutableStateOf(false) }
+            var showHistory by rememberSaveable { mutableStateOf(false) }
 
             shakeDetector = ShakeDetector {
                 calculatorViewModel.onShake()
@@ -89,7 +91,14 @@ class MainActivity : AppCompatActivity() {
                         if (showHistory) {
                             HistoryScreen(
                                 historyItems = history,
-                                onBack = { showHistory = false }
+                                onBack = { showHistory = false },
+                                onItemClick = { expression ->
+                                    calculatorViewModel.useHistoryExpression(expression)
+                                    showHistory = false
+                                },
+                                onClearHistory = { calculatorViewModel.clearHistory() },
+                                onLoadAll = { calculatorViewModel.loadAllHistory() },
+                                onLoadRecent = { limit -> calculatorViewModel.loadRecentHistory(limit) }
                             )
                         } else {
                             CalculatorScreen(
@@ -111,7 +120,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         shakeDetector?.let {
             sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
-                sensorManager.registerListener(it, accelerometer, SensorManager.SENSOR_DELAY_UI)
+                sensorManager.registerListener(it, accelerometer, SensorManager.SENSOR_DELAY_UI) // обратно UI
             }
         }
     }

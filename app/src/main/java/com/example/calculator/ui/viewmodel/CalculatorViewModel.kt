@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class CalculatorViewModel(
     private val useCase: CalculatorUseCase,
@@ -36,11 +37,12 @@ class CalculatorViewModel(
     }
 
     fun onAction(action: String) {
+        val oldInput = _state.value.input // сохраняем выражение до обработки
         val newState = useCase.processAction(_state.value, action)
-        _state.value = newState
         if (action == "=" && newState.isResult && !newState.result.equals("Error", ignoreCase = true)) {
-            saveHistory(_state.value.input, newState.result)
+            saveHistory(oldInput, newState.result)
         }
+        _state.value = newState
     }
 
     fun onShake() {
@@ -63,8 +65,9 @@ class CalculatorViewModel(
 
     private fun observeHistory() {
         viewModelScope.launch {
-            historyRepository.getHistoryItems().collect { items ->
+            historyRepository.getHistoryItems(limit = 20).collect { items ->
                 _history.value = items
+                Log.d("CalculatorVM", "History loaded: ${items.size} items")
             }
         }
     }
@@ -73,5 +76,33 @@ class CalculatorViewModel(
         viewModelScope.launch {
             historyRepository.addHistoryItem(expression, result)
         }
+    }
+
+    fun loadAllHistory() {
+        viewModelScope.launch {
+            historyRepository.getHistoryItems(limit = 1000).collect { items ->
+                _history.value = items
+                Log.d("CalculatorVM", "All history loaded: ${items.size} items")
+            }
+        }
+    }
+
+    fun loadRecentHistory(limit: Int = 10) {
+        viewModelScope.launch {
+            historyRepository.getHistoryItems(limit = limit.toLong()).collect { items ->
+                _history.value = items
+                Log.d("CalculatorVM", "Recent $limit history loaded: ${items.size} items")
+            }
+        }
+    }
+
+    fun clearHistory() {
+        _history.value = emptyList()
+        Log.d("CalculatorVM", "History cleared locally")
+    }
+
+    fun useHistoryExpression(expression: String) {
+        Log.d("CalculatorVM", "useHistoryExpression: '$expression'")
+        _state.value = _state.value.copy(input = expression, result = "0", isResult = false)
     }
 }

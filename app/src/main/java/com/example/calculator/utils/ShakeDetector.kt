@@ -3,6 +3,7 @@ package com.example.calculator.utils
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 
 class ShakeDetector(
     private val onShake: () -> Unit
@@ -10,14 +11,13 @@ class ShakeDetector(
 
     private var lastShakeTime: Long = 0
     private val shakeThreshold = 15f
-    private val minInterval = 1000
+    private val minInterval = 1000L
 
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
             val x = event.values[0]
             val y = event.values[1]
             val z = event.values[2]
-
             val acceleration = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
             if (acceleration > shakeThreshold) {
                 val now = System.currentTimeMillis()

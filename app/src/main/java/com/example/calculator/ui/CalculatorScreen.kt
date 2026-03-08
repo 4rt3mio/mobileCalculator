@@ -5,6 +5,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.example.calculator.data.model.AppTheme
 import com.example.calculator.domain.model.CalculatorState
@@ -21,6 +22,9 @@ fun CalculatorScreen(
     onThemeSelected: (AppTheme) -> Unit,
     onOpenSettings: () -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -30,25 +34,36 @@ fun CalculatorScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onOpenSettings) {
-                Text("⚙️")
-            }
             IconButton(onClick = onOpenHistory) {
                 Text("📋")
             }
-            ThemeSwitcher(
-                currentTheme = currentTheme,
-                onThemeSelected = onThemeSelected
-            )
+            Row {
+                ThemeSwitcher(
+                    currentTheme = currentTheme,
+                    onThemeSelected = onThemeSelected
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(onClick = onOpenSettings) {
+                    Text("⚙️")
+                }
+            }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         CalculatorDisplay(
             state = state,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(if (isLandscape) 80.dp else 120.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        CalculatorKeyboard(onButtonClick = onAction)
+        CalculatorKeyboard(
+            onButtonClick = onAction,
+            modifier = Modifier.weight(1f),
+            isLandscape = isLandscape
+        )
     }
 }

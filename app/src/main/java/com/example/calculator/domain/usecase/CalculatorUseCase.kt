@@ -3,6 +3,7 @@ package com.example.calculator.domain.usecase
 import com.example.calculator.domain.model.CalculatorState
 import com.example.calculator.domain.model.Operation
 import java.util.Stack
+import android.util.Log
 import kotlin.math.*
 
 class CalculatorUseCase {
@@ -49,7 +50,7 @@ class CalculatorUseCase {
         if (state.isResult) {
             return state.copy(input = digit, isResult = false)
         }
-        if (state.input.length >= 12) return state
+        if (state.input.length >= 20) return state
         val newInput = state.input + digit
         return state.copy(input = newInput, isResult = false)
     }
@@ -132,8 +133,10 @@ class CalculatorUseCase {
     private fun evaluate(state: CalculatorState): CalculatorState {
         if (state.input.isEmpty()) return state
         val result = evaluateExpression(state.input)
-        return if (result == null) {
-            state.copy(result = "Error", isResult = true)
+        Log.d("Calculator", "evaluate: input=${state.input}, result=$result")
+        return if (result == null || result.isInfinite() || result.isNaN()) {
+            Log.d("Calculator", "return Error")
+            state.copy(input = "", result = "Error", isResult = true)  // очищаем input
         } else {
             val formatted = formatResult(result)
             state.copy(input = "", result = formatted, isResult = true)
@@ -155,8 +158,17 @@ class CalculatorUseCase {
             when {
                 c.isWhitespace() -> i++
                 c in listOf('+', '-', '*', '/') -> {
-                    result.add(c.toString())
-                    i++
+                    if (c == '-' && (i == 0 || expr[i - 1] in listOf('+', '-', '*', '/', '('))) {
+                        val start = i
+                        i++
+                        while (i < n && (expr[i].isDigit() || expr[i] == '.')) {
+                            i++
+                        }
+                        result.add(expr.substring(start, i))
+                    } else {
+                        result.add(c.toString())
+                        i++
+                    }
                 }
                 c.isDigit() || c == '.' -> {
                     val start = i
@@ -213,7 +225,12 @@ class CalculatorUseCase {
                         "+" -> a + b
                         "-" -> a - b
                         "*" -> a * b
-                        "/" -> if (b != 0.0) a / b else return null
+                        "/" -> {
+                            if (b == 0.0) {
+                                Log.d("Calculator", "division by zero detected")
+                                return null
+                            } else a / b
+                        }
                         else -> return null
                     }
                     stack.push(result)
@@ -227,8 +244,8 @@ class CalculatorUseCase {
         val str = if (value == value.toLong().toDouble()) {
             value.toLong().toString()
         } else {
-            value.toString()
+            String.format("%.5f", value).trimEnd('0').trimEnd('.')
         }
-        return if (str.length > 12) str.take(12) else str
+        return str.replace(',', '.')
     }
 }
